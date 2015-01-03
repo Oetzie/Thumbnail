@@ -277,7 +277,7 @@
 		 */
 		protected function getFileThumbnail($file) {
 			if (!is_file($file['tmpfile']) || filemtime($file['file']) > filemtime($file['tmpfile'])) {
-				if (filemtime($file['tmpfile']) < time() + $this->config['cacheExpires']) {
+				if (!is_file($file['tmpfile']) || filemtime($file['tmpfile']) < time() + $this->config['cacheExpires']) {
 					return true;	
 				}
 			}
