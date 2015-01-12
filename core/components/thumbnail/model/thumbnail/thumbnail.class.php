@@ -134,10 +134,11 @@
 			$this->setCustomConfig($config);
 			
 			if (false !== ($file = $this->getFileInfo($input))) {
-				$size = $this->calculateSizes($file);
+				if (in_array($file['mime'], array('image/png', 'image/gif', 'image/jpg', 'image/jpeg'))) {
+					$size = $this->calculateSizes($file);
 				
-				if (false !== $this->getFileThumbnail($file)) {
-					if (in_array($file['mime'], array('image/png', 'image/gif', 'image/jpg', 'image/jpeg'))) {
+					if (false !== $this->getFileThumbnail($file)) {
+					
 						$image = imagecreatefromstring(file_get_contents($file['file']));
 						imagealphablending($image, true);
 						
@@ -173,15 +174,16 @@
 							);
 						}
 					} else {
-						$this->modx->log(modX::LOG_LEVEL_ERROR, '[Thumbnail] Not supported mime-type "'.$file['mime'].'".');
+						return array(
+							'file'		=> substr($file['tmpfile'], strlen(rtrim($this->modx->getOption('base_path'), '/')) + 1, strlen($file['tmpfile'])),
+							'width'		=> $size['maxWidth'],
+							'height'	=> $size['maxHeight']
+						);
 					}
-				} else {
-					return array(
-						'file'		=> substr($file['tmpfile'], strlen(rtrim($this->modx->getOption('base_path'), '/')) + 1, strlen($file['tmpfile'])),
-						'width'		=> $size['maxWidth'],
-						'height'	=> $size['maxHeight']
-					);
+				} else if ('directory' != $file['mime']) {
+					$this->modx->log(modX::LOG_LEVEL_ERROR, '[Thumbnail] Not supported mime-type "'.$file['mime'].'".');
 				}
+				
 			}
 			
 			return false;
