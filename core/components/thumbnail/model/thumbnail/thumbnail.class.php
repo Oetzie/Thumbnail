@@ -322,6 +322,14 @@
 				$size['newHeight'] 	= $size['maxHeight'];
 			}
 			
+			if (false !== ($maxWidth = $this->modx->getOption('mW', $this->config, false))) {
+				$size['maxWidth']	= $size['newWidth'];
+			}
+			
+			if (false !== ($maxHeight = $this->modx->getOption('mH', $this->config, false))) {
+				$size['maxHeight']	= $size['newHeight'];
+			}
+			
 			if ((bool) $this->modx->getOption('fullScreen', $this->config, true)) {
 				if ($size['newWidth'] < $size['maxWidth']) {
 					$size['newHeight']	= ceil($size['newHeight'] * ($size['maxWidth'] / $size['newWidth']));
