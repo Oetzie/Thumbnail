@@ -4,6 +4,13 @@ Thumbnail
 
 ---------------------
 Version: 1.0.1
+Released: 2015-02-10
+----------------------
+- Min and Max height function added
+- Windows CHMOD bug fixed
+
+---------------------
+Version: 1.0.0
 Released: 2015-01-03
 ----------------------
 - First release

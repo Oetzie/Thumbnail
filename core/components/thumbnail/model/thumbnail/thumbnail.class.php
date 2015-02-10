@@ -96,7 +96,7 @@
 		 * @param Integer $chmod.
 		 * @return String.
 		 */
-		protected function getDirectory($directory, $chmod = 0755) {
+		protected function getDirectory($directory, $chmod = 0777) {
 			$output = '';
 			
 			$directory = trim(preg_replace('/([\/\\\])+/si', '/', $directory), '/');
@@ -112,7 +112,7 @@
 					
 						return false;
 					}
-				} else if (substr(decoct(fileperms($dir)), 1) != $chmod) {
+				} else if (substr(decoct(fileperms($dir)), 2) != decoct($chmod)) {
 					if (!chmod($dir, $chmod)) {
 						$this->modx->log(modX::LOG_LEVEL_ERROR, '[Thumbnail] Could not chmod directory "'.$dir.'".');
 					
@@ -303,8 +303,8 @@
 			$size = array(
 				'orgWidth'	=> $width,
 				'orgHeight'	=> $height,
-				'maxWidth'	=> $this->modx->getOption('w', $this->config, $width),
-				'maxHeight'	=> $this->modx->getOption('h', $this->config, $height),
+				'maxWidth'	=> $this->modx->getOption('w', $this->config, $this->modx->getOption('mW', $this->config, $width)),
+				'maxHeight'	=> $this->modx->getOption('h', $this->config, $this->modx->getOption('mH', $this->config, $width)),
 				'newWidth'	=> $width,
 				'newHeight'	=> $height,
 				'type'		=> array_search(max($type), $type),
