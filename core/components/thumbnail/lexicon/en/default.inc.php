@@ -32,6 +32,7 @@
 	$_lang['setting_thumbnail_cache_dir_desc']					= 'The location (directory) where the thumbnails will be saved. Default "assets/thumbnails/".';
 	$_lang['setting_thumbnail_cache_expires']					= 'Expiretime cache';
 	$_lang['setting_thumbnail_cache_expires_desc']				= 'The number of seconds that a thumbnail needs to be cached. Default "604800".';
+	$_lang['setting_thumbnail_cache_expires_desc']				= 'HThe number of seconds that a thumbnail needs to be cached. Use "0" for no cache, cache for always unless the official image is changed use "-1". Default "-1".';
 	$_lang['setting_thumbnail_tmp_name']						= 'Hash thumbnail name';
 	$_lang['setting_thumbnail_tmp_name_desc']					= 'Hash the settings together in the thumbnail filename. Default "Yes".';
 	

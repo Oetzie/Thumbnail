@@ -23,7 +23,7 @@
 	$settings[2] = $modx->newObject('modSystemSetting');
 	$settings[2]->fromArray(array(
 		'key' 		=> PKG_NAME_LOWER.'_cache_expires',
-		'value' 	=> '604800',
+		'value' 	=> '-1',
 		'xtype' 	=> 'textfield',
 		'namespace' => PKG_NAME_LOWER,
 		'area' 		=> PKG_NAME_LOWER

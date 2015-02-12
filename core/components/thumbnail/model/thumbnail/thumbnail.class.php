@@ -96,7 +96,7 @@
 		 * @param Integer $chmod.
 		 * @return String.
 		 */
-		protected function getDirectory($directory, $chmod = 0777) {
+		protected function getDirectory($directory, $chmod = 0755) {
 			$output = '';
 			
 			$directory = trim(preg_replace('/([\/\\\])+/si', '/', $directory), '/');
@@ -138,7 +138,6 @@
 					$size = $this->calculateSizes($file);
 				
 					if (false !== $this->getFileThumbnail($file)) {
-					
 						$image = imagecreatefromstring(file_get_contents($file['file']));
 						imagealphablending($image, true);
 						
@@ -278,9 +277,15 @@
 		 * @return Boolean.
 		 */
 		protected function getFileThumbnail($file) {
-			if (!is_file($file['tmpfile']) || filemtime($file['file']) > filemtime($file['tmpfile'])) {
-				if (!is_file($file['tmpfile']) || filemtime($file['tmpfile']) < time() + $this->config['cacheExpires']) {
-					return true;	
+			if (0 == $this->config['cacheExpires']) {
+				return true;
+			} else if (!is_file($file['tmpfile']) || filemtime($file['file']) > filemtime($file['tmpfile'])) {
+				if (!is_file($file['tmpfile'])) {
+					return true;
+				} else {
+					if (-1 != $this->config['cacheExpires'] && filemtime($file['tmpfile']) < time() + $this->config['cacheExpires']) {
+						return true;
+					}
 				}
 			}
 			
