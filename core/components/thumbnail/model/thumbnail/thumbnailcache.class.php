@@ -53,7 +53,8 @@
 				'modelPath' 			=> $corePath.'model/',
 				'assetsDir'				=> $this->modx->getOption('thumbnail_assets_dir'),
 				'cacheDir'				=> $this->modx->getOption('thumbnail_cache_dir'),
-				'cacheExpires'			=> $this->modx->getOption('thumbnail_cache_expires')
+				'cacheExpires'			=> $this->modx->getOption('thumbnail_cache_expires'),
+				'clearCache'			=> $this->modx->getOption('thumbnail_clear_cache')
 			), $config);
 			
 			$this->modx->lexicon->load('thumbnail:default');
@@ -65,11 +66,15 @@
 		 * @return Boolean.
 		 */
 		public function clean($directory) {
-			if (false !== ($clean = $this->cleanDirectory($directory))) {
-				$this->modx->log(modX::LOG_LEVEL_INFO, $this->modx->lexicon('thumbnail.clear_cache'));
+			if ((bool) $this->config['clearCache']) {
+				if (false !== ($clean = $this->cleanDirectory($directory))) {
+					$this->modx->log(modX::LOG_LEVEL_INFO, $this->modx->lexicon('thumbnail.clear_cache'));
+				}
+				
+				return $clean;
 			}
 			
-			return $clean;
+			return true;
 		}
 		
 		/**

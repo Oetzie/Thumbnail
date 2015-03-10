@@ -26,14 +26,16 @@
 		
 	$_lang['area_thumbnail']									= 'Thumbnail';
 	
-	$_lang['setting_thumbnail_assets_dir']						= 'Assets folder.';
+	$_lang['setting_thumbnail_assets_dir']						= 'Assets folder';
 	$_lang['setting_thumbnail_assets_dir_desc']					= 'De locatie (folder) waar de afbeeldingen zijn opgeslagen. Standaard "assets/".';
-	$_lang['setting_thumbnail_cache_dir']						= 'Cache folder.';
+	$_lang['setting_thumbnail_cache_dir']						= 'Cache folder';
 	$_lang['setting_thumbnail_cache_dir_desc']					= 'De locatie (folder) waar de thumbnails worden opgeslagen. Standaard "assets/thumbnails/".';
 	$_lang['setting_thumbnail_cache_expires']					= 'Verlooptijd cache';
 	$_lang['setting_thumbnail_cache_expires_desc']				= 'Het aantal seconden dat een thumbnail opgeslagen dient te worden. Geen gebruik maken van cache gebruik "0", cachen voor altijd tenzij officiële afbeelding gewijzigd is gebruik "-1". Standaard "-1".';
 	$_lang['setting_thumbnail_tmp_name']						= 'Hash thumbnail naam';
 	$_lang['setting_thumbnail_tmp_name_desc']					= 'Hash de settings samen in de thumbnail bestandsnaam. Standaard "Ja".';
+	$_lang['setting_thumbnail_clear_cache']						= 'Leeg thumbnail cache';
+	$_lang['setting_thumbnail_clear_cache_desc']				= 'Leeg de thumbnail cache als de website cache word geleegd. Standaard "Nee".';
 	
 	$_lang['thumbnail_snippet_fullsize_desc']					= 'Maak de afbeelding fullscreen in de thumbnail. Standaard "Ja".';
 	$_lang['thumbnail_snippet_position_desc']					= 'De positie van de afbeeldingen in de thumbnail. Standaard "center" en kan "topleft, top, topright, right, bottomright, bottom, bottomleft, left of center" zijn.';

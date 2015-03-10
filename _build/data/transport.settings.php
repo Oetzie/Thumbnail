@@ -37,6 +37,15 @@
 		'namespace' => PKG_NAME_LOWER,
 		'area' 		=> PKG_NAME_LOWER
 	), '', true, true);
+	
+	$settings[4] = $modx->newObject('modSystemSetting');
+	$settings[4]->fromArray(array(
+		'key' 		=> PKG_NAME_LOWER.'_clear_cache',
+		'value' 	=> '0',
+		'xtype' 	=> 'combo-boolean',
+		'namespace' => PKG_NAME_LOWER,
+		'area' 		=> PKG_NAME_LOWER
+	), '', true, true);
 		
 	return $settings;
 	

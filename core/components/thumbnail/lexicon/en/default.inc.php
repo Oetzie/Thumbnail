@@ -35,6 +35,8 @@
 	$_lang['setting_thumbnail_cache_expires_desc']				= 'HThe number of seconds that a thumbnail needs to be cached. Use "0" for no cache, cache for always unless the official image is changed use "-1". Default "-1".';
 	$_lang['setting_thumbnail_tmp_name']						= 'Hash thumbnail name';
 	$_lang['setting_thumbnail_tmp_name_desc']					= 'Hash the settings together in the thumbnail filename. Default "Yes".';
+	$_lang['setting_thumbnail_clear_cache']						= 'Clear thumbnail cache';
+	$_lang['setting_thumbnail_clear_cache_desc']				= 'Clear the thumbnail cache if the websites cache clears. Default "No".';
 	
 	$_lang['thumbnail_snippet_fullsize_desc']					= 'Make the image fullscreen in the thumbnail. Default "Yes".';
 	$_lang['thumbnail_snippet_position_desc']					= 'The position of the image in the thumbnail. Default "center" and can be "topleft, top, topright, right, bottomright, bottom, bottomleft, left or center".';
