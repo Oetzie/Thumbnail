@@ -66,7 +66,7 @@
 				'md5TmpName'			=> $this->modx->getOption('thumbnail_tmp_name'),
 				'fullScreen'			=> 1,
 				'position'				=> 'center',
-				'quality'				=> 100
+				'quality'				=> 85
 			), $config);
 
 			$this->modx->addPackage('thumbnail', $this->config['modelPath']);
@@ -113,10 +113,12 @@
 						return false;
 					}
 				} else if (substr(decoct(fileperms($dir)), 2) != decoct($chmod)) {
-					if (!chmod($dir, $chmod)) {
-						$this->modx->log(modX::LOG_LEVEL_ERROR, '[Thumbnail] Could not chmod directory "'.$dir.'".');
-					
-						return false;
+					if (version_compare(PHP_VERSION, '5.5.0', '<')) {
+						if (!chmod($dir, $chmod)) {
+							$this->modx->log(modX::LOG_LEVEL_ERROR, '[Thumbnail] Could not chmod directory "'.$dir.'".');
+							
+							return false;
+						}
 					}
 				}
 			}
@@ -164,6 +166,7 @@
 						}
 	
 						imagedestroy($image);
+						imagedestroy($thumbnail);
 						
 						if ($result) {
 							return array(
@@ -180,7 +183,7 @@
 						);
 					}
 				} else if ('directory' != $file['mime']) {
-					$this->modx->log(modX::LOG_LEVEL_ERROR, '[Thumbnail] Not supported mime-type "'.$file['mime'].'".');
+					$this->modx->log(modX::LOG_LEVEL_ERROR, '[Thumbnail] Not supported mime-type "'.$file['mime'].'" for file "'.$file['file'].'".');
 				}
 				
 			}
