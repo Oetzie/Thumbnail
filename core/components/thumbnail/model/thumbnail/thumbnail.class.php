@@ -414,8 +414,9 @@
 		 * @return Mixed.
 		 */
 		protected function getImageCompression($image, $body = null, $header = array()) {
-			$curl = curl_init();
-
+			$curl 		= curl_init();
+			$curlVer 	= curl_version();
+			
 			curl_setopt_array($curl, array(
 				CURLOPT_URL				=> rtrim($this->config['tinyfi_api_endpoint'], '/'),
 	            CURLOPT_BINARYTRANSFER 	=> true,
@@ -425,7 +426,7 @@
 	            CURLOPT_USERPWD 		=> 'api:'.$this->config['tinyfi_api_key'],
 	            CURLOPT_CAINFO 			=> dirname(__FILE__).'/cert.pem',
 	            CURLOPT_SSL_VERIFYPEER 	=> true,
-	            CURLOPT_USERAGENT 		=> sprintf('Tinify/%s PHP/%s curl/%s', '1.2.0', PHP_VERSION, curl_version()['version']),
+	            CURLOPT_USERAGENT 		=> sprintf('Tinify/%s PHP/%s curl/%s', '1.2.0', PHP_VERSION, $curlVer['version']),
 	        ));
 	        
 	        if ($body) {
