@@ -3,7 +3,7 @@
 	/**
 	 * Thumbnail
 	 *
-	 * Copyright 2014 by Oene Tjeerd de Bruin <info@oetzie.nl>
+	 * Copyright 2016 by Oene Tjeerd de Bruin <info@oetzie.nl>
 	 *
 	 * This file is part of Thumbnail, a real estate property listings component
 	 * for MODX Revolution.
@@ -34,44 +34,63 @@
 		 * @var Array.
 		 */
 		public $config = array();
-		
+
 		/**
 		 * @acces public.
 		 * @param Object $modx.
 		 * @param Array $config.
 		 */
-		function __construct(modX &$modx, array $config = array()) {
+		public function __construct(modX &$modx, array $config = array()) {
 			$this->modx =& $modx;
-			
+
 			$corePath 		= $this->modx->getOption('thumbnail.core_path', $config, $this->modx->getOption('core_path').'components/thumbnail/');
 			$assetsUrl 		= $this->modx->getOption('thumbnail.assets_url', $config, $this->modx->getOption('assets_url').'components/thumbnail/');
 			$assetsPath 	= $this->modx->getOption('thumbnail.assets_path', $config, $this->modx->getOption('assets_path').'components/thumbnail/');
-			
+		
 			$this->config = array_merge(array(
-				'basePath'				=> $corePath,
-				'corePath' 				=> $corePath,
-				'modelPath' 			=> $corePath.'model/',
-				'assetsDir'				=> $this->modx->getOption('thumbnail_assets_dir'),
-				'cacheDir'				=> $this->modx->getOption('thumbnail_cache_dir'),
-				'cacheExpires'			=> $this->modx->getOption('thumbnail_cache_expires'),
-				'clearCache'			=> $this->modx->getOption('thumbnail_clear_cache')
+				'namespace'				=> $this->modx->getOption('namespace', $config, 'thumbnail'),
+				'helpurl'				=> $this->modx->getOption('helpurl', $config, 'thumbnail'),
+				'language'				=> 'thumbnail:default',
+				'base_path'				=> $corePath,
+				'core_path' 			=> $corePath,
+				'model_path' 			=> $corePath.'model/',
+				'processors_path' 		=> $corePath.'processors/',
+				'elements_path' 		=> $corePath.'elements/',
+				'chunks_path' 			=> $corePath.'elements/chunks/',
+				'cronjobs_path' 		=> $corePath.'elements/cronjobs/',
+				'plugins_path' 			=> $corePath.'elements/plugins/',
+				'snippets_path' 		=> $corePath.'elements/snippets/',
+				'assets_path' 			=> $assetsPath,
+				'js_url' 				=> $assetsUrl.'js/',
+				'css_url' 				=> $assetsUrl.'css/',
+				'assets_url' 			=> $assetsUrl,
+				'connector_url'			=> $assetsUrl.'connector.php',
+				'use_tinyfi'			=> $this->modx->getOption('thumbnail.use_tinyfy'),
+				'tinyfi_api_endpoint'	=> $this->modx->getOption('thumbnail.tinyfy_api_endpoint'),
+				'tinyfi_api_key'		=> $this->modx->getOption('thumbnail.tinyfy_api_key'),
+				'cache_path'			=> $this->modx->getOption('thumbnail.cache_path'),
+				'cache_lifetime'		=> $this->modx->getOption('thumbnail.cache_lifetime'),
+				'clear_cache'			=> $this->modx->getOption('thumbnail.clear_cache')
 			), $config);
 			
-			$this->modx->lexicon->load('thumbnail:default');
+			$this->modx->addPackage('thumbnail', $this->config['model_path']);
 		}
 		
 		/**
 		 * @acces public.
-		 * @param String $directory.
 		 * @return Boolean.
 		 */
-		public function clean($directory) {
-			if ((bool) $this->config['clearCache']) {
-				if (false !== ($clean = $this->cleanDirectory($directory))) {
+		public function run() {
+			$this->modx->lexicon->load($this->config['language']);
+			
+			if ((bool) $this->config['clear_cache']) {
+				$path = rtrim($this->modx->getOption('base_path'), '/').'/'.rtrim($this->config['cache_path'], '/').'/';
+				
+				if (false !== ($clear = $this->clearPath($path))) {
 					$this->modx->log(modX::LOG_LEVEL_INFO, $this->modx->lexicon('thumbnail.clear_cache'));
 				}
 				
-				return $clean;
+				return $clear;
 			}
 			
 			return true;
@@ -79,32 +98,39 @@
 		
 		/**
 		 * @acces public.
-		 * @param String $directory.
+		 * @param String $path.
 		 * @return Boolean.
 		 */
-		protected function cleanDirectory($directory) {
-			$directory = rtrim(preg_replace('/([\/\\\])+/si', '/', $directory), '/');
-
-			if (is_dir($directory)) {
-				foreach (scandir($directory) as $object) {
-					if (!in_array($object, array('.', '..'))) {
-						if ('dir' == filetype($directory.'/'.$object)){
-							$this->cleanDirectory($directory.'/'.$object);
+		protected function clearPath($path) {
+			$path = rtrim($path, '/').'/';
+			$base = rtrim($this->modx->getOption('base_path'), '/').'/'.rtrim($this->config['cache_path'], '/').'/';
+			
+			if (is_dir($path)) {
+				foreach (scandir($path) as $value) {
+					if (!in_array($value, array('.', '..'))) {
+						if ('dir' == filetype($path.$value)){
+							$this->clearPath($path.$value);
 						} else { 
-							if (unlink($directory.'/'.$object)) {
-								//$this->modx->log(modX::LOG_LEVEL_INFO, '[Thumbnail] Clear cache file "'.$object.'".');
+							if (!unlink($path.$value)) {
+								$this->modx->log(modX::LOG_LEVEL_INFO, $this->modx->lexicon('thumbnail.clear_cache_error_file', array(
+									'value'	=> $value
+								)));
 							}
 						}
 					}
 				}
 				
-				if (rmdir($directory)) {
-					//$this->modx->log(modX::LOG_LEVEL_INFO, '[Thumbnail] Clear cache directory "'.$directory.'".');
+				if ($path != $base) {
+					if (!rmdir($path)) {
+						$this->modx->log(modX::LOG_LEVEL_INFO, $this->modx->lexicon('thumbnail.clear_cache_error_path', array(
+							'value'	=> $value
+						)));
+					}
 				}
 			}
 			
 			return true;
 		}
 	}
-	
+
 ?>

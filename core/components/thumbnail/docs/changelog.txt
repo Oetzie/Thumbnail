@@ -3,6 +3,12 @@ Thumbnail
 ----------------------
 
 ---------------------
+Version: 1.0.3
+Released: 2016-02-09
+----------------------
+- Tinyfy (TinyPNG) support to compress images.
+
+---------------------
 Version: 1.0.2
 Released: 2015-06-24
 ----------------------
@@ -12,9 +18,8 @@ Released: 2015-06-24
 Version: 1.0.1
 Released: 2015-02-10
 ----------------------
-- Min and Max height function added
 - Windows CHMOD bug fixed
-- Systemsetting for clear thumbnail cache
+- System Setting for clear thumbnail cache
 
 ---------------------
 Version: 1.0.0

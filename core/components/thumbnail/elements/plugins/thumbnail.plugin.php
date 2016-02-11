@@ -1,9 +1,9 @@
 <?php
-
+	
 	/**
 	 * Thumbnail
 	 *
-	 * Copyright 2013 by Oene Tjeerd de Bruin <info@oetzie.nl>
+	 * Copyright 2016 by Oene Tjeerd de Bruin <info@oetzie.nl>
 	 *
 	 * This file is part of Thumbnail, a real estate property listings component
 	 * for MODX Revolution.
@@ -18,19 +18,19 @@
 	 * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 	 *
 	 * You should have received a copy of the GNU General Public License along with
-	 * Thumbnail; if not, write to the Free Software Foundation, Inc., 59 Temple Place,
+	 * Tinyfy; if not, write to the Free Software Foundation, Inc., 59 Temple Place,
 	 * Suite 330, Boston, MA 02111-1307 USA
 	 */
-
+	 
 	switch($modx->event->name) {
 		case 'OnSiteRefresh':
-			require_once $modx->getOption('thumbnail.core_path', null, $modx->getOption('core_path').'components/thumbnail/').'/model/thumbnail/thumbnailcache.class.php';
+	        $thumbnail = $modx->getService('thumbnailcache', 'ThumbnailCache', $modx->getOption('thumbnail.core_path', null, $modx->getOption('core_path').'components/thumbnail/').'model/thumbnail/');
 
-			$thumbnailCache = new ThumbnailCache($modx, $scriptProperties);
-
-			$thumbnailCache->clean($modx->getOption('base_path').$modx->getOption('thumbnail_cache_dir'));
-
-			break;
+	        if ($thumbnail instanceOf ThumbnailCache) {
+	            return $thumbnail->run();
+	        }
+	        
+            break;
 	}
 	
 	return;

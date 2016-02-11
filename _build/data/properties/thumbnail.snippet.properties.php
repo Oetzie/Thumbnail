@@ -2,20 +2,20 @@
 
 	return array(
 		array(
-	        'name' 		=> 'fullSize',
-	        'desc' 		=> 'thumbnail_snippet_fullsize_desc',
+	        'name' 		=> 'cache',
+	        'desc' 		=> 'thumbnail_snippet_cache_desc',
 	        'type' 		=> 'combo-boolean',
 	        'options' 	=> '',
-	        'value'		=> '1',
+	        'value'		=> true,
 	        'area'		=> PKG_NAME_LOWER,
 	        'lexicon' 	=> PKG_NAME_LOWER.':default'
 	    ),
 	    array(
 	        'name' 		=> 'position',
-	        'desc' 		=> 'thumbnail_snippet_position_desc',
+	        'desc' 		=> 'thumbnail_snippet_method_desc',
 	        'type' 		=> 'textfield',
 	        'options' 	=> '',
-	        'value'		=> 'center',
+	        'value'		=> 'cover',
 	        'area'		=> PKG_NAME_LOWER,
 	        'lexicon' 	=> PKG_NAME_LOWER.':default'
 	    ),
@@ -24,7 +24,7 @@
 	        'desc' 		=> 'thumbnail_snippet_quality_desc',
 	        'type' 		=> 'numberfield',
 	        'options' 	=> '',
-	        'value'		=> '100',
+	        'value'		=> '75',
 	        'area'		=> PKG_NAME_LOWER,
 	        'lexicon' 	=> PKG_NAME_LOWER.':default'
 	    )

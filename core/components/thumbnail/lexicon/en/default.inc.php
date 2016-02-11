@@ -3,7 +3,7 @@
 	/**
 	 * Thumbnail
 	 *
-	 * Copyright 2013 by Oene Tjeerd de Bruin <info@oetzie.nl>
+	 * Copyright 2016 by Oene Tjeerd de Bruin <info@oetzie.nl>
 	 *
 	 * This file is part of Thumbnail, a real estate property listings component
 	 * for MODX Revolution.
@@ -26,22 +26,25 @@
 		
 	$_lang['area_thumbnail']									= 'Thumbnail';
 	
-	$_lang['setting_thumbnail_assets_dir']						= 'Assets directory.';
-	$_lang['setting_thumbnail_assets_dir_desc']					= 'The location (directory) where the images are saved. Default "assets/".';
-	$_lang['setting_thumbnail_cache_dir']						= 'Cache directory.';
-	$_lang['setting_thumbnail_cache_dir_desc']					= 'The location (directory) where the thumbnails will be saved. Default "assets/thumbnails/".';
-	$_lang['setting_thumbnail_cache_expires']					= 'Expiretime cache';
-	$_lang['setting_thumbnail_cache_expires_desc']				= 'The number of seconds that a thumbnail needs to be cached. Default "604800".';
-	$_lang['setting_thumbnail_cache_expires_desc']				= 'HThe number of seconds that a thumbnail needs to be cached. Use "0" for no cache, cache for always unless the official image is changed use "-1". Default "-1".';
-	$_lang['setting_thumbnail_tmp_name']						= 'Hash thumbnail name';
-	$_lang['setting_thumbnail_tmp_name_desc']					= 'Hash the settings together in the thumbnail filename. Default "Yes".';
-	$_lang['setting_thumbnail_clear_cache']						= 'Clear thumbnail cache';
-	$_lang['setting_thumbnail_clear_cache_desc']				= 'Clear the thumbnail cache if the websites cache clears. Default "No".';
+	$_lang['setting_thumbnail.use_tinyfy']						= 'Use Tinyfy';
+	$_lang['setting_thumbnail.use_tinyfy_desc']					= 'Use Tinyfy to compress the images so the images will be saved smaller. <strong>Pay attention:</strong> as a result, it takes longer to generate images.';
+	$_lang['setting_thumbnail.tinyfy_api_key']					= 'Tinyfy API key';
+	$_lang['setting_thumbnail.tinyfy_api_key_desc']				= 'The Tinyfy API key for authenticating the Tinyfy API to compress the images.';
+	$_lang['setting_thumbnail.tinyfy_api_endpoint']				= 'Tinyfy API URL';
+	$_lang['setting_thumbnail.tinyfy_api_endpoint_desc']		= 'The URL of the Tinyfy API o compress the images.';
+	$_lang['setting_thumbnail.cache_path']						= 'Cache location';
+	$_lang['setting_thumbnail.cache_path_desc']					= 'The location where all images will be saved.';
+	$_lang['setting_thumbnail.cache_lifetime']					= 'Cache lifetime';
+	$_lang['setting_thumbnail.cache_lifetime_desc']				= 'The number of days that an image need to be saved, after this the image will be refreshed automatically. Use "0" for not using the cache, use "-1" to cache the image infinity unless the original image has been updated. Default is "-1".';
+	$_lang['setting_thumbnail.clear_cache']						= 'Refresh cache';
+	$_lang['setting_thumbnail.clear_cache_desc']				= 'Refresh the image cache if the website cache has been refreshed. Default is "No".';
 	
-	$_lang['thumbnail_snippet_fullsize_desc']					= 'Make the image fullscreen in the thumbnail. Default "Yes".';
-	$_lang['thumbnail_snippet_position_desc']					= 'The position of the image in the thumbnail. Default "center" and can be "topleft, top, topright, right, bottomright, bottom, bottomleft, left or center".';
-	$_lang['thumbnail_snippet_quality_desc']					= 'The image quality of the thumbnail. Default "100".';
+	$_lang['thumbnail_snippet_method_desc']						= 'The method to scale the images, this can be "scale", "fit" or "cover". Default is "cover".';
+	$_lang['thumbnail_snippet_cache_desc']						= 'If yes, the image will be saved in the cache with a temporary name.';
+	$_lang['thumbnail_snippet_quality_desc']					= 'The quality of the image, this is a number between the "0" and "100" where "100" stands for high quality. Default is "75".';
 	
-	$_lang['thumbnail.clear_cache']								= 'Empty the thumbnails cache: Refreshing succeed!';
+	$_lang['thumbnail.clear_cache']								= 'Refresh image cache: Refresh succeed.';
+	$_lang['thumbnail.clear_cache_error_file']					= 'Refresh image cache: Image "[[+value]]" could not be refreshed.';
+	$_lang['thumbnail.clear_cache_error_path']					= 'Refresh image cache: Cache location "[[+value]]" could not be refreshed.';
 	
 ?>

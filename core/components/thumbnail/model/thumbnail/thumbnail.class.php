@@ -3,7 +3,7 @@
 	/**
 	 * Thumbnail
 	 *
-	 * Copyright 2014 by Oene Tjeerd de Bruin <info@oetzie.nl>
+	 * Copyright 2016 by Oene Tjeerd de Bruin <info@oetzie.nl>
 	 *
 	 * This file is part of Thumbnail, a real estate property listings component
 	 * for MODX Revolution.
@@ -39,256 +39,307 @@
 		 * @acces public.
 		 * @var Array.
 		 */
-		public $customConfig = array();
-		
+		public $properties = array();
+
 		/**
 		 * @acces public.
 		 * @param Object $modx.
 		 * @param Array $config.
 		 */
-		function __construct(modX &$modx, array $config = array()) {
+		public function __construct(modX &$modx, array $config = array()) {
 			$this->modx =& $modx;
-			
+
 			$corePath 		= $this->modx->getOption('thumbnail.core_path', $config, $this->modx->getOption('core_path').'components/thumbnail/');
 			$assetsUrl 		= $this->modx->getOption('thumbnail.assets_url', $config, $this->modx->getOption('assets_url').'components/thumbnail/');
 			$assetsPath 	= $this->modx->getOption('thumbnail.assets_path', $config, $this->modx->getOption('assets_path').'components/thumbnail/');
-			
+		
 			$this->config = array_merge(array(
-				'basePath'				=> $corePath,
-				'corePath' 				=> $corePath,
-				'modelPath' 			=> $corePath.'model/',
-				'elementsPath' 			=> $corePath.'elements/',
-				'snippetsPath' 			=> $corePath.'elements/snippets/',
-				'helpurl'				=> 'thumbnail',
-				'assetsDir'				=> $this->modx->getOption('thumbnail_assets_dir'),
-				'cacheDir'				=> $this->modx->getOption('thumbnail_cache_dir'),
-				'cacheExpires'			=> $this->modx->getOption('thumbnail_cache_expires'),
-				'md5TmpName'			=> $this->modx->getOption('thumbnail_tmp_name'),
-				'fullScreen'			=> 1,
-				'position'				=> 'center',
-				'quality'				=> 85
+				'namespace'				=> $this->modx->getOption('namespace', $config, 'thumbnail'),
+				'helpurl'				=> $this->modx->getOption('helpurl', $config, 'thumbnail'),
+				'language'				=> 'thumbnail:default',
+				'base_path'				=> $corePath,
+				'core_path' 			=> $corePath,
+				'model_path' 			=> $corePath.'model/',
+				'processors_path' 		=> $corePath.'processors/',
+				'elements_path' 		=> $corePath.'elements/',
+				'chunks_path' 			=> $corePath.'elements/chunks/',
+				'cronjobs_path' 		=> $corePath.'elements/cronjobs/',
+				'plugins_path' 			=> $corePath.'elements/plugins/',
+				'snippets_path' 		=> $corePath.'elements/snippets/',
+				'assets_path' 			=> $assetsPath,
+				'js_url' 				=> $assetsUrl.'js/',
+				'css_url' 				=> $assetsUrl.'css/',
+				'assets_url' 			=> $assetsUrl,
+				'connector_url'			=> $assetsUrl.'connector.php',
+				'use_tinyfi'			=> $this->modx->getOption('thumbnail.use_tinyfy'),
+				'tinyfi_api_endpoint'	=> $this->modx->getOption('thumbnail.tinyfy_api_endpoint'),
+				'tinyfi_api_key'		=> $this->modx->getOption('thumbnail.tinyfy_api_key'),
+				'cache_path'			=> $this->modx->getOption('thumbnail.cache_path'),
+				'cache_lifetime'		=> $this->modx->getOption('thumbnail.cache_lifetime'),
+				'clear_cache'			=> $this->modx->getOption('thumbnail.clear_cache')
 			), $config);
-
-			$this->modx->addPackage('thumbnail', $this->config['modelPath']);
 			
-			$this->modx->lexicon->load('thumbnail:default');
+			$this->modx->addPackage('thumbnail', $this->config['model_path']);
 		}
 		
 		/**
-		 * @acces protected.
-		 * @param String $customConfig.
+		 * @acces public.
+		 * @param Array $scriptProperties.
+		 * @return Boolean.
 		 */
-		protected function setCustomConfig($customConfig) {
-			foreach (explode('&', trim($customConfig, '&')) as $key => $value) {
-				if (false !== strstr($value, '=')) {
-					$value = explode('=', $value, 2);
-		
-					$this->customConfig[array_shift($value)] = array_shift($value);
+		public function setScriptProperties($scriptProperties = array()) {
+			$properties = array();
+			
+			if (isset($scriptProperties['input'])) {
+				$properties['image'] = $scriptProperties['input'];
+			}
+			
+			if (isset($scriptProperties['options'])) {
+				foreach (explode('&', ltrim($scriptProperties['options'], '&')) as $option) {
+					if (false !== strstr($option, '=')) {
+						list($key, $option) = explode('=', $option);
+						
+						$properties[$key] = $option;
+					}
 				}
 			}
 			
-			$this->config = array_merge($this->config, $this->customConfig);
+			$this->properties = array_merge(array(
+				'method'	=> 'cover',
+				'cache'		=> true,
+				'quality'	=> 75,
+				'filter'	=> ''
+			), $properties);
+			
+			return true;
+		}
+		
+		/**
+		 * @acces public.
+		 * @param String $input.
+		 * @param Array $properties.
+		 * @return String.
+		 */
+		public function run($input, $properties = array()) {
+			$this->setScriptProperties(array_merge(array(
+				'input' => $input
+			), $properties));
+			
+			if (file_exists($this->properties['image']) || strstr($this->properties['image'], 'http')) {
+				$image 		= $this->properties['image'];
+
+				$basename 	= substr($image, strrpos($image, '/') + 1, strlen($image));
+				$extension 	= strtolower(substr($basename, strrpos($basename, '.') + 1, strlen($basename)));
+				$name		= substr($basename, 0, strrpos($basename, '.'));
+				$path		= substr($image, 0, strrpos($image, '/') + 1);
+
+				if (in_array($extension, array('jpg', 'jpeg', 'png', 'gif'))) {
+					$path 		= $this->getImagePath($path);
+					$sizes 		= $this->getImageSizes($image);
+					$tmpname 	= $this->getImageTmpName($name, $extension);
+
+					if (!$this->getImageCache($image, $path.$tmpname)) {
+						$source = imagecreatefromstring(file_get_contents($image));
+						imagealphablending($source, true);
+
+						foreach ($this->properties['filter'] as $filter) {
+							if (is_array($filter)) {
+								imagefilter($source, $filter['filter'], array_shift($filter), array_shift($filter), array_shift($filter), array_shift($filter));
+							}
+						}
+						
+						$thumbnail = imagecreatetruecolor($sizes['width'], $sizes['height']);
+						
+						imagealphablending($thumbnail, false);
+						imagesavealpha($thumbnail, true); 
+						imagefill($thumbnail, 0, 0, imagecolorallocatealpha($thumbnail, 0, 0, 0, 127));
+	
+						imagecopyresampled($thumbnail, $source, $sizes['position_left'], $sizes['position_top'], 0, 0, $sizes['resize_width'], $sizes['resize_height'], $sizes['image_width'], $sizes['image_height']);
+					
+						switch ($extension) {
+							case 'jpg':
+							case 'jpeg':
+								$result = imagejpeg($thumbnail, $path.$tmpname, (int) $this->properties['quality']);
+								
+								break;
+							case 'png':
+								$result = imagepng($thumbnail, $path.$tmpname, round((9 / 100) * (int) $this->properties['quality']));
+								
+								break;
+							case 'gif':
+								$result = imagegif($thumbnail, $path.$tmpname);
+								
+								break;
+						}
+						
+						imagedestroy($source);
+						imagedestroy($thumbnail);
+						
+						if (!$result) {
+							return $image;
+						}
+					}
+					
+					if ((bool) $this->config['use_tinyfi']) {
+						$cTmpname = $this->getImageTmpName($name, $extension, array('compressed'));
+						
+						if (!$this->getImageCache($image, $path.$cTmpname)) {
+							if ($compressed = $this->getImageCompression($image, file_get_contents($path.$tmpname))) {
+								if (copy($compressed, $path.$cTmpname)) {
+									$tmpname = $cTmpname;
+								} else {
+									return $image;
+								}
+							}
+						} else {
+							$tmpname = $cTmpname;
+						}
+					}
+					
+					return rtrim(substr($path, strlen(rtrim($this->modx->getOption('base_path'), '/')) + 1, strlen($path)), '/').'/'.$tmpname;
+				}				
+			}
+			
+			return $this->properties['image'];
 		}
 		
 		/**
 		 * @acces protected.
-		 * @param String $dir.
+		 * @param String $path.
 		 * @param Integer $chmod.
 		 * @return String.
 		 */
-		protected function getDirectory($directory, $chmod = 0755) {
-			$output = '';
+		protected function getImagePath($path, $chmod = 0755) {
+			$output	= rtrim($this->modx->getOption('base_path'), '/').'/';
 			
-			$directory = trim(preg_replace('/([\/\\\])+/si', '/', $directory), '/');
+			if (false === strstr($path, 'http')) {
+				if ((bool) $this->properties['cache']) {
+					$path = rtrim($this->config['cache_path'], '/').'/'.rtrim($path, '/').'/';
+				} else {
+					$path = rtrim($path, '/').'/';
+				}
+			} else {
+				$path = rtrim($this->config['cache_path'], '/').'/';
+			}
 			
-			foreach (explode('/', $directory) as $value) {
-				$output .= $value.'/';
+			foreach (array_filter(explode('/', $path)) as $part) {
+				$output .= $part.'/';
 				
-				$dir = $this->modx->getOption('base_path').$output;
-				
-				if (!is_dir($dir)) {
-					if (!mkdir($dir, $chmod)) {
-						$this->modx->log(modX::LOG_LEVEL_ERROR, '[Thumbnail] Could not create directory "'.$dir.'".');
+				if (!is_dir($output)) {
+					if (!mkdir($output, $chmod)) {
+						$this->modx->log(modX::LOG_LEVEL_ERROR, 'Thumbnail, could not create cache directory "'.$output.'".');
 					
 						return false;
 					}
-				} else if (substr(decoct(fileperms($dir)), 2) != decoct($chmod)) {
+				} else if (substr(decoct(fileperms($output)), 2) != decoct($chmod)) {
 					if (version_compare(PHP_VERSION, '5.5.0', '<')) {
-						if (!chmod($dir, $chmod)) {
-							$this->modx->log(modX::LOG_LEVEL_ERROR, '[Thumbnail] Could not chmod directory "'.$dir.'".');
+						if (!chmod($output, $chmod)) {
+							$this->modx->log(modX::LOG_LEVEL_ERROR, 'Thumbnail, could not chmod cache directory "'.$output.'".');
 							
 							return false;
 						}
 					}
 				}
 			}
-
-			return $this->modx->getOption('base_path').$output;
+			
+			return $output;
 		}
 		
 		/**
-		 * @acces public.
-		 * @param String $input.
-		 * @param String $config.
+		 * @acces protected.
+		 * @param String $image.
 		 * @return Array.
 		 */
-		public function create($input, $config) {
-			$this->setCustomConfig($config);
+		protected function getImageSizes($image) {
+			list($imageWidth, $imageHeight) = getimagesize($image);
 			
-			if (false !== ($file = $this->getFileInfo($input))) {
-				if (in_array($file['mime'], array('image/png', 'image/gif', 'image/jpg', 'image/jpeg'))) {
-					$size = $this->calculateSizes($file);
-				
-					if (false !== $this->getFileThumbnail($file)) {
-						$image = imagecreatefromstring(file_get_contents($file['file']));
-						imagealphablending($image, true);
-						
-						$image = $this->setFilters($image);
-						
-						$thumbnail = imagecreatetruecolor($size['maxWidth'], $size['maxHeight']);
-						
-						imagealphablending($thumbnail, false);
-						imagesavealpha($thumbnail, true);  
-	
-						imagecopyresampled($thumbnail, $image, $size['left'], $size['top'], 0, 0, $size['newWidth'], $size['newHeight'], $size['orgWidth'], $size['orgHeight']);
-						
-						switch ($file['mime']) {
-							case 'image/png':
-								$result = imagepng($thumbnail, $file['tmpfile'], round((9 / 100) * $this->config['quality']));
-								break;
-							case 'image/gif':
-								$result = imagegif($thumbnail, $file['tmpfile']);
-								break;
-							case 'image/jpg':
-							case 'image/jpeg':
-								$result = imagejpeg($thumbnail, $file['tmpfile'], $this->config['quality']);
-								break;
+			$sizes = array(
+				'image_width'	=> $imageWidth,
+				'image_height'	=> $imageHeight,
+				'resize_width'	=> $imageWidth,
+				'resize_height'	=> $imageHeight,
+				'width'			=> isset($this->properties['width']) ? $this->properties['width'] : $imageWidth,
+				'height'		=> isset($this->properties['height']) ? $this->properties['height'] : $imageHeight,
+				'position_top'	=> 0,
+				'position_left'	=> 0
+			);
+			
+			switch (strtolower($this->properties['method'])) {
+				case 'scale':
+					if (isset($this->properties['width'])) {
+						if ($sizes['resize_width'] > $sizes['width']) {
+							$sizes['resize_height']	= ceil($sizes['resize_height'] * ($sizes['width'] / $sizes['resize_width']));
+							$sizes['resize_width'] 	= $sizes['width'];
 						}
-	
-						imagedestroy($image);
-						imagedestroy($thumbnail);
 						
-						if ($result) {
-							return array(
-								'file'		=> substr($file['tmpfile'], strlen(rtrim($this->modx->getOption('base_path'), '/')) + 1, strlen($file['tmpfile'])),
-								'width'		=> $size['maxWidth'],
-								'height'	=> $size['maxHeight']
-							);
+						$sizes['height'] = $sizes['resize_height'];
+					} else if (isset($this->properties['height'])) {
+						if ($sizes['resize_height'] > $sizes['height']) {
+							$sizes['resize_width']	= ceil($sizes['resize_width'] * ($sizes['height'] / $sizes['resize_height']));
+							$sizes['resize_height'] 	= $sizes['height'];
 						}
-					} else {
-						return array(
-							'file'		=> substr($file['tmpfile'], strlen(rtrim($this->modx->getOption('base_path'), '/')) + 1, strlen($file['tmpfile'])),
-							'width'		=> $size['maxWidth'],
-							'height'	=> $size['maxHeight']
-						);
+						
+						$sizes['width'] = $sizes['resize_width'];
 					}
-				} else if ('directory' != $file['mime']) {
-					$this->modx->log(modX::LOG_LEVEL_ERROR, '[Thumbnail] Not supported mime-type "'.$file['mime'].'" for file "'.$file['file'].'".');
-				}
+					
+					break;
+				case 'fit':
+					if ($sizes['resize_width'] > $sizes['width']) {
+						$sizes['resize_height']	= ceil($sizes['resize_height'] * ($sizes['width'] / $sizes['resize_width']));
+						$sizes['resize_width'] 	= $sizes['width'];
+					}
+					
+					if ($sizes['resize_height'] > $sizes['height']) {
+						$sizes['resize_width']	= ceil($sizes['resize_width'] * ($sizes['height'] / $sizes['resize_height']));
+						$sizes['resize_height'] 	= $sizes['height'];
+					}
+					
+					break;
+				case 'cover':
+					if ($sizes['resize_width'] > $sizes['width']) {
+						$sizes['resize_height']	= ceil($sizes['resize_height'] * ($sizes['width'] / $sizes['resize_width']));
+						$sizes['resize_width'] 	= $sizes['width'];
+					}
+					
+					if ($sizes['resize_height'] > $sizes['height']) {
+						$sizes['resize_width']	= ceil($sizes['resize_width'] * ($sizes['height'] / $sizes['resize_height']));
+						$sizes['resize_height'] 	= $sizes['height'];
+					}
+					
+					if ($sizes['resize_width'] < $sizes['width']) {
+						$sizes['resize_height']	= ceil($sizes['resize_height'] * ($sizes['width'] / $sizes['resize_width']));
+						$sizes['resize_width'] 	= $sizes['width'];
+					}
+					
+					if ($sizes['resize_height'] < $sizes['height']) {
+						$sizes['resize_width']	= ceil($sizes['resize_width'] * ($sizes['height'] / $sizes['resize_height']));
+						$sizes['resize_height'] 	= $sizes['height'];
+					}
 				
+					break;
 			}
 			
-			return false;
-		}
-		
-		/**
-		 * @acces public.
-		 * @param Resource $image.
-		 * @return Resource.
-		 */
-		protected function setFilters($image) {
-			if (false !== ($filtersStr = $this->modx->getOption('filters', $this->config, false))) {
-				$filters = array(
-                    'negate'			=> IMG_FILTER_NEGATE,
-                    'grayscale'			=> IMG_FILTER_GRAYSCALE,
-                    'brightness'		=> IMG_FILTER_BRIGHTNESS,
-                    'contrast'			=> IMG_FILTER_CONTRAST,
-                    'colorize'			=> IMG_FILTER_COLORIZE,
-                    'edgedetect'        => IMG_FILTER_EDGEDETECT,
-                    'emboss'            => IMG_FILTER_EMBOSS,
-                    'gaussianblur' 		=> IMG_FILTER_GAUSSIAN_BLUR,
-                    'selectiveblur'   	=> IMG_FILTER_SELECTIVE_BLUR,
-                    'removal'           => IMG_FILTER_MEAN_REMOVAL,
-                    'smooth'            => IMG_FILTER_SMOOTH,
-                    'pixelate'          => IMG_FILTER_PIXELATE
-                );
-                
-                foreach (explode(',', $filtersStr) as $filter) {
-	                $filter = explode('|', $filter);
-	                $filterKey = array_shift($filter);
+			$this->properties['width'] 	= $sizes['width'];
+			$this->properties['height'] = $sizes['height'];
 
-	                if (isset($filters[$filterKey])) {
-                        imagefilter($image, $filters[$filterKey], array_shift($filter), array_shift($filter), array_shift($filter), array_shift($filter));
-                    }
-                }
-			}
+			$sizes['position_left']	= round(($sizes['width'] - $sizes['resize_width']) / 2);
+			$sizes['position_top']	= round(($sizes['height'] - $sizes['resize_height']) / 2);
 			
-			return $image;
+			return $sizes;
 		}
 		
 		/**
 		 * @acces protected.
-		 * @param String $file.
-		 * @return Array.
-		 */
-		protected function getFileInfo($file) {
-			$file = ltrim(preg_replace('/([\/\\\])+/si', '/', $file), '/');
-			
-			$directory = trim(preg_replace('/([\/\\\])+/si', '/', $this->config['assetsDir']), '/');
-			
-			if (0 === ($pos = strpos($file, $directory))) {
-				$file = trim(substr($file, strlen($directory), strlen($file)), '/');
-			}
-			
-			$fullPathFile = rtrim($this->modx->getOption('base_path'), '/').'/'.$directory.'/'.$file;
-
-			if (file_exists($fullPathFile)) {
-				return array_merge(array(
-					'file'		=> $fullPathFile,
-					'tmpfile'	=> $this->getFileTmp($file),
-					'mime'		=> finfo_file(finfo_open(FILEINFO_MIME_TYPE), $fullPathFile)
-				), pathinfo($fullPathFile));
-			}
-			
-			return false;
-		}
-		
-		/**
-		 * @acces protected.
-		 * @param String $file.
-		 * @return String.
-		 */
-		protected function getFileTmp($file) {
-			$directory = '';
-			
-			if (false !== ($pos = strrpos($file, '/'))) {
-				$directory = substr($file, 0, $pos);
-				$file = substr($file, $pos + 1, strlen($file));
-			}
-			
-			list($file, $extension) = explode('.', $file);
-			
-			
-			$tmpName = (bool) $this->config['md5TmpName'] ? '.'.md5(serialize($this->customConfig)) : '';
-		
-			return $this->getDirectory($this->config['cacheDir'].$directory).$file.$tmpName.'.'.$extension;
-		}
-		
-		/**
-		 * @acces protected.
-		 * @param Array $file.
+		 * @param String $image.
+		 * @param String $tmpimage.
 		 * @return Boolean.
 		 */
-		protected function getFileThumbnail($file) {
-			if (0 == $this->config['cacheExpires']) {
-				return true;
-			} else if (!is_file($file['tmpfile']) || filemtime($file['file']) > filemtime($file['tmpfile'])) {
-				if (!is_file($file['tmpfile'])) {
+		protected function getImageCache($image, $tmpimage) {
+			if (0 != $this->config['cache_lifetime'] && file_exists($tmpimage)) {
+				if (-1 == $this->config['cache_lifetime'] && filemtime($tmpimage) > filemtime($image)) {
 					return true;
-				} else {
-					if (-1 != $this->config['cacheExpires'] && filemtime($file['tmpfile']) < time() + $this->config['cacheExpires']) {
-						return true;
-					}
+				} else if (filemtime($tmpimage) > (time() - (86400 * $this->config['cache_lifetime']))) {
+					return true;
 				}
 			}
 			
@@ -297,100 +348,144 @@
 		
 		/**
 		 * @acces protected.
-		 * @param Array $file.
+		 * @param String $name.
+		 * @param String $extension.
+		 * @param Array $properties.
+		 * @return String.
+		 */
+		protected function getImageTmpName($name, $extension, $properties = array()) {
+			if ((bool) $this->properties['cache']) {
+				return sprintf('%s.%s.%s', $name, md5(serialize(array_merge(array(
+					'size'		=> $this->properties['width'].'x'.$this->properties['height'],
+					'method'	=> $this->properties['method'],
+					'quality'	=> $this->properties['quality'],
+					'filters'	=> $this->getImageFilters()
+				), $properties))), $extension);
+			} else {
+				return sprintf('%s.%s', $name, $extension);
+			}
+		}
+		
+		/**
+		 * @acces protected.
 		 * @return Array.
 		 */
-		protected function calculateSizes($file) {
-			list($width, $height) = getimagesize($file['file']);
-			
-			$type = array(
-				'landscape' => $width, 
-				'portrait' 	=> $height
-			);
-			
-			$size = array(
-				'orgWidth'	=> $width,
-				'orgHeight'	=> $height,
-				'maxWidth'	=> $this->modx->getOption('w', $this->config, $this->modx->getOption('mW', $this->config, $width)),
-				'maxHeight'	=> $this->modx->getOption('h', $this->config, $this->modx->getOption('mH', $this->config, $width)),
-				'newWidth'	=> $width,
-				'newHeight'	=> $height,
-				'type'		=> array_search(max($type), $type),
-				'position'	=> $this->modx->getOption('position', $this->config, 'center'),
-				'mime'		=> $file['mime']
-			);
-			
-			if ($size['newWidth'] > $size['maxWidth']) {
-				$size['newHeight']	= ceil($size['newHeight'] * ($size['maxWidth'] / $size['newWidth']));
-				$size['newWidth'] 	= $size['maxWidth'];
-			}
-			
-			if ($size['newHeight'] > $size['maxHeight']) {
-				$size['newWidth']	= ceil($size['newWidth'] * ($size['maxHeight'] / $size['newHeight']));
-				$size['newHeight'] 	= $size['maxHeight'];
-			}
-			
-			if (false !== ($maxWidth = $this->modx->getOption('mW', $this->config, false))) {
-				$size['maxWidth']	= $size['newWidth'];
-			}
-			
-			if (false !== ($maxHeight = $this->modx->getOption('mH', $this->config, false))) {
-				$size['maxHeight']	= $size['newHeight'];
-			}
-			
-			if ((bool) $this->modx->getOption('fullScreen', $this->config, true)) {
-				if ($size['newWidth'] < $size['maxWidth']) {
-					$size['newHeight']	= ceil($size['newHeight'] * ($size['maxWidth'] / $size['newWidth']));
-					$size['newWidth'] 	= $size['maxWidth'];
+		protected function getImageFilters() {
+			$filters = array(
+	            'negate'			=> IMG_FILTER_NEGATE,
+	            'grayscale'			=> IMG_FILTER_GRAYSCALE,
+	            'brightness'		=> IMG_FILTER_BRIGHTNESS,
+	            'contrast'			=> IMG_FILTER_CONTRAST,
+	            'colorize'			=> IMG_FILTER_COLORIZE,
+	            'edgedetect'        => IMG_FILTER_EDGEDETECT,
+	            'emboss'            => IMG_FILTER_EMBOSS,
+	            'gaussianblur' 		=> IMG_FILTER_GAUSSIAN_BLUR,
+	            'selectiveblur'   	=> IMG_FILTER_SELECTIVE_BLUR,
+	            'removal'           => IMG_FILTER_MEAN_REMOVAL,
+	            'smooth'            => IMG_FILTER_SMOOTH,
+	            'pixelate'          => IMG_FILTER_PIXELATE
+	        );
+        
+			if (isset($this->properties['filter'])) {
+				if (is_string($this->properties['filter'])) {
+					$this->properties['filter'] = explode(',', $this->properties['filter']);
 				}
 				
-				if ($size['newHeight'] < $size['maxHeight']) {
-					$size['newWidth']	= ceil($size['newWidth'] * ($size['maxHeight'] / $size['newHeight']));
-					$size['newHeight'] 	= $size['maxHeight'];
+				foreach ($this->properties['filter'] as $key => $filter) {
+					$filter = explode('|', $filter);
+					$type 	= array_shift($filter);
+					
+					if (isset($filters[$type])) {
+						$this->properties['filter'][$key] = array(
+							'filter'	=> $filters[$type]
+						) + $filter;
+					}
 				}
 			}
-			
-			switch (strtolower($size['position'])) {
-				case 'topleft':
-					$size['top']	= 0;
-					$size['left']	= 0;
-					break;
-				case 'top':
-					$size['top']	= 0;
-					$size['left']	= round(($size['maxWidth'] - $size['newWidth']) / 2);
-					break;
-				case 'topright':
-					$size['top']	= 0;
-					$size['left']	= round($size['maxWidth'] - $size['newWidth']);
-					break;
-				case 'right':
-					$size['top']	= round(($size['maxHeight'] - $size['newHeight']) / 2);
-					$size['left']	= round($size['maxWidth'] - $size['newWidth']);
-					break;
-				case 'bottomright':
-					$size['top']	= round($size['maxHeight'] - $size['newHeight']);
-					$size['left']	= round($size['maxWidth'] - $size['newWidth']);
-					break;
-				case 'bottom':
-					$size['top']	= round($size['maxHeight'] - $size['newHeight']);
-					$size['left']	= round(($size['maxWidth'] - $size['newWidth']) / 2);
-					break;
-				case 'bottomleft':
-					$size['top']	= round($size['maxHeight'] - $size['newHeight']);
-					$size['left']	= 0;
-					break;
-				case 'left':
-					$size['top']	= round(($size['maxHeight'] - $size['newHeight']) / 2);
-					$size['left']	= 0;
-					break;
-				default:
-					$size['top']	= round(($size['maxHeight'] - $size['newHeight']) / 2);
-					$size['left']	= round(($size['maxWidth'] - $size['newWidth']) / 2);
-					break;
-			}
-			
-			return $size;
+				
+			return $this->properties['filter'];
+		}
+		
+		/**
+		 * @acces protected.
+		 * @param String $image.
+		 * @param Mixed $body.
+		 * @param Array $header.
+		 * @return Mixed.
+		 */
+		protected function getImageCompression($image, $body = null, $header = array()) {
+			$curl = curl_init();
+
+			curl_setopt_array($curl, array(
+				CURLOPT_URL				=> rtrim($this->config['tinyfi_api_endpoint'], '/'),
+	            CURLOPT_BINARYTRANSFER 	=> true,
+	            CURLOPT_RETURNTRANSFER 	=> true,
+	            CURLOPT_HEADER 			=> true,
+	            CURLOPT_HTTPHEADER		=> $header,
+	            CURLOPT_USERPWD 		=> 'api:'.$this->config['tinyfi_api_key'],
+	            CURLOPT_CAINFO 			=> dirname(__FILE__).'/cert.pem',
+	            CURLOPT_SSL_VERIFYPEER 	=> true,
+	            CURLOPT_USERAGENT 		=> sprintf('Tinify/%s PHP/%s curl/%s', '1.2.0', PHP_VERSION, curl_version()['version']),
+	        ));
+	        
+	        if ($body) {
+		        if (is_array($body)) {
+			        $header[] = 'Content-Type: application/json';
+			        
+			        curl_setopt($curl, CURLOPT_HTTPHEADER, $header);
+			    	curl_setopt($curl, CURLOPT_POSTFIELDS, $this->modx->toJSON($body));   
+		        } else {
+			    	curl_setopt($curl, CURLOPT_POSTFIELDS, $body);  
+		        }
+        	} else {
+	        	curl_setopt($curl, CURLOPT_HTTPHEADER, $header);
+        	}
+        	
+        	$response = curl_exec($curl);
+        	
+        	if (is_string($response)) {
+	        	$status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+				$header = curl_getinfo($curl, CURLINFO_HEADER_SIZE);
+				$body 	= substr($response, $header);
+				
+				curl_close($curl);
+				
+				$headers = $this->getImageCompressionHeaders(substr($response, 0, $header));
+				
+				if ($status >= 200 && $status <= 299) {
+					$response = $this->modx->fromJSON($body);
+					
+					if (isset($response['output']['url'])) {
+						return $response['output']['url'];
+					}
+				}
+	        }
+        	
+        	return false;
+		}
+		
+		/**
+		 * @acces protected.
+		 * @param String $input.
+		 * @return Array.
+		 */
+		protected function getImageCompressionHeaders($input) {
+			if (!is_array($header)) {
+            	$input = explode("\r\n", $input);
+        	}
+        	
+        	$headers = array();
+        	
+        	foreach ($input as $header) {
+	        	if (!empty($header) && false !== strstr($header, ':')) {
+		        	list($key, $value) = explode(':', $header);
+		        	
+		        	$headers[$key] = $value;
+		        }	
+        	}
+        	
+        	return $headers;
 		}
 	}
-	
+
 ?>
